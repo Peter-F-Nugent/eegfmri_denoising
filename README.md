@@ -23,5 +23,24 @@ or
 uv install eegfmri_denoising
 ```
 ---
+## Current Goals
+
+- [ ] Create reliable examples
+- [ ] Create documentation (sphinx)
+- [ ] Implement carbon wire loop regression
+- [ ] Implement ECG peak detection
+- [ ] Implement BCG artifact simulation
+- [ ] Update units tests
+- [ ] Continuous intergration
+- [ ] Implement pooch for fetching example data.
+- [ ] Implement QC measures
+
+## Contributing
+1. Fork this github repo
+2. Clone the fork to your pc
+3. Install uv (https://docs.astral.sh/uv/getting-started/installation/)
+4. cd to the repo
+5. Run "uv sync" to install dependencies
+
 ## Example Usage
 TBC
