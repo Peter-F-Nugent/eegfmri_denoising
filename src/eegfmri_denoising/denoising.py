@@ -1,5 +1,6 @@
 import mne
 
+
 def remove_gradients(
     raw,
     event_name="Gradient/G  1",
@@ -90,5 +91,5 @@ def remove_gradients(
 
 def r_peak_detection(raw):
     out = raw.copy()
-    
+
     return out

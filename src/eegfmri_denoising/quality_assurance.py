@@ -1,8 +1,11 @@
 import mne
 import numpy as np
 
-def get_rms(raw,
-    event_name="Gradient/G  1",):
+
+def get_rms(
+    raw,
+    event_name="Gradient/G  1",
+):
     """
     Compute RMS of gradient-locked residuals.
 

@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import mne
 import pypulseq as pp
 
+
 class SphereModel:
     def __init__(self, info=None, bore_offset=0.0, n_wire_points=50):
         self.bore_offset = bore_offset
@@ -33,7 +34,7 @@ class SphereModel:
 
         # zero — relative to sphere centre at origin
         self.center = np.array([0.0, 0.0, 0.0])
-        self.top    = np.array([0.0, 0.0, self.radius])  # top of head = MNE z
+        self.top = np.array([0.0, 0.0, self.radius])  # top of head = MNE z
         self.eeg_coords_proj = self.center + self.vecs * self.radius
 
         # build wires
@@ -46,15 +47,17 @@ class SphereModel:
 
         # shift along bore axis (MNE y = head-foot when lying supine)
         offset = np.array([0.0, bore_offset, 0.0])
-        self.center          = self.center + offset
-        self.top             = self.top    + offset
+        self.center = self.center + offset
+        self.top = self.top + offset
         self.eeg_coords_proj = self.eeg_coords_proj + offset
-        self.wires           = [wire + offset for wire in self.wires]
+        self.wires = [wire + offset for wire in self.wires]
 
     def __repr__(self):
-        return (f"SphereModel | {len(self.ch_names)} channels | "
+        return (
+            f"SphereModel | {len(self.ch_names)} channels | "
             f"radius={self.radius*100:.1f}cm | "
-            f"bore_offset={self.bore_offset*100:.1f}cm")
+            f"bore_offset={self.bore_offset*100:.1f}cm"
+        )
 
     @staticmethod
     def great_circle_arc(p1, p2, center, radius, n=50):
@@ -97,62 +100,74 @@ class SphereModel:
 
 class PulseSequence:
     """
-    Defines gradient waveforms and timing for a simulated pulse sequence. 
-    This is used to simulate the gradient artefact and BCG artefact in the EEG data. 
+    Defines gradient waveforms and timing for a simulated pulse sequence.
+    This is used to simulate the gradient artefact and BCG artefact in the EEG data.
     """
+
     def __init__(self, sfreq=100000):
         self.sfreq = sfreq
 
     def __repr__(self) -> str:
         duration = len(self.Gz) / self.sfreq
-        return (f"PulseSequence | sfreq={self.sfreq}Hz | "
-                f"duration={duration:.2f}s | "
-                f"n_samples={len(self.Gz)}")
-    
-    def load_seq(self, pulse_seq_file = None, GAMMA = 42.576e6):
+        return (
+            f"PulseSequence | sfreq={self.sfreq}Hz | "
+            f"duration={duration:.2f}s | "
+            f"n_samples={len(self.Gz)}"
+        )
+
+    def load_seq(self, pulse_seq_file=None, GAMMA=42.576e6):
         seq = pp.Sequence()
         seq.read(pulse_seq_file)
-        gw_pp = seq.get_gradients()   # list of 3 PPoly objects [Gx, Gy, Gz]
+        gw_pp = seq.get_gradients()  # list of 3 PPoly objects [Gx, Gy, Gz]
         duration = seq.duration()[0]
-        t = np.arange(0, duration, 1/self.sfreq)
+        t = np.arange(0, duration, 1 / self.sfreq)
 
         self.Gx = np.nan_to_num(gw_pp[0](t)) / GAMMA  # Hz/m → T/m
         self.Gy = np.nan_to_num(gw_pp[1](t)) / GAMMA
         self.Gz = np.nan_to_num(gw_pp[2](t)) / GAMMA
 
     def load_standard_epi(self):
-        print('Assigning standard EPI sequence...')
+        print("Assigning standard EPI sequence...")
         self.load_seq("../notebooks/epi_pypulseq.seq")
 
     def plot(self):
         plt.figure(figsize=(10, 6))
-        plt.plot(self.Gx, label='Gx')
-        plt.plot(self.Gy, label='Gy')
-        plt.plot(self.Gz, label='Gz')
-        plt.title('Gradient Waveforms')
-        plt.xlabel('Sample Index')
-        plt.ylabel('Gradient Amplitude (T/m)')
+        plt.plot(self.Gx, label="Gx")
+        plt.plot(self.Gy, label="Gy")
+        plt.plot(self.Gz, label="Gz")
+        plt.title("Gradient Waveforms")
+        plt.xlabel("Sample Index")
+        plt.ylabel("Gradient Amplitude (T/m)")
         plt.legend()
         plt.show()
 
     ### TODO, consider merging this into the artifact simulation...im not convinced this needs to be seperate when we already have seq objects from pypulseseq
 
-       
+
 class GradientArtefact:
-    def __init__(self, sphere: SphereModel, pulse_seq: PulseSequence, n_slices=32, tr=2, n_volumes=60):
-        self.sphere    = sphere
-        self.Gx        = pulse_seq.Gx
-        self.Gy        = pulse_seq.Gy
-        self.Gz        = pulse_seq.Gz
-        self.sfreq     = pulse_seq.sfreq
-        self.n_slices  = n_slices
+    def __init__(
+        self,
+        sphere: SphereModel,
+        pulse_seq: PulseSequence,
+        n_slices=32,
+        tr=2,
+        n_volumes=60,
+    ):
+        self.sphere = sphere
+        self.Gx = pulse_seq.Gx
+        self.Gy = pulse_seq.Gy
+        self.Gz = pulse_seq.Gz
+        self.sfreq = pulse_seq.sfreq
+        self.n_slices = n_slices
         self.n_volumes = n_volumes
-        self.V_t       = None
+        self.V_t = None
 
     def __repr__(self) -> str:
-        return (f"GradientArtefact | sfreq={self.sfreq}Hz | "
-                f"n_volumes={self.n_volumes} | "
-                f"total_duration={len(self.Gz)*self.n_slices*self.n_volumes/self.sfreq:.2f}s")
+        return (
+            f"GradientArtefact | sfreq={self.sfreq}Hz | "
+            f"n_volumes={self.n_volumes} | "
+            f"total_duration={len(self.Gz)*self.n_slices*self.n_volumes/self.sfreq:.2f}s"
+        )
 
     # ------------------------------------------------------------------ #
     #  A field equations — for plot_field() only                          #
@@ -162,25 +177,25 @@ class GradientArtefact:
     def A_z(x, y, z, G):
         """Vector potential for z-gradient. Eq A2."""
         Ax = -0.5 * G * y * z
-        Ay =  0.5 * G * x * z
-        Az =  np.zeros_like(x)
+        Ay = 0.5 * G * x * z
+        Az = np.zeros_like(x)
         return np.column_stack([Ax, Ay, Az])
 
     @staticmethod
     def A_x(x, y, z, G):
         """Vector potential for x-gradient. Eq A4."""
-        Ax = -0.5  * G * x * y
-        Ay =  0.25 * G * (x**2 - y**2)
-        Az =  G * y * z
+        Ax = -0.5 * G * x * y
+        Ay = 0.25 * G * (x**2 - y**2)
+        Az = G * y * z
         return np.column_stack([Ax, Ay, Az])
 
     @staticmethod
     def A_y(x, y, z, G, Gx=0):
         """Vector potential for y-gradient. Eq A6.
         Note: k component is cross term with Gx — defaults to 0 for plotting."""
-        Ax =  0.25 * G * (x**2 - y**2)
-        Ay =  0.5  * G * x * y
-        Az = -Gx   * x * z
+        Ax = 0.25 * G * (x**2 - y**2)
+        Ay = 0.5 * G * x * y
+        Az = -Gx * x * z
         return np.column_stack([Ax, Ay, Az])
 
     # ------------------------------------------------------------------ #
@@ -194,113 +209,169 @@ class GradientArtefact:
     # ------------------------------------------------------------------ #
 
     @staticmethod
-    def get_Vz(r, theta=0.0, phi=0.0, dG_dt=1.0, x0=0.0, y0=0.0, z0=0.0,
-               alpha=np.radians(-15), beta=0.0):
+    def get_Vz(
+        r,
+        theta=0.0,
+        phi=0.0,
+        dG_dt=1.0,
+        x0=0.0,
+        y0=0.0,
+        z0=0.0,
+        alpha=np.radians(-15),
+        beta=0.0,
+    ):
         """
         Full analytic artefact voltage for longitudinal (z) gradient. Eq 6.
         MNE coordinate system. Default alpha=15° for realistic head tilt.
         """
-        cot_alpha = (np.cos(alpha) / np.sin(alpha)
-                     if np.abs(np.sin(alpha)) > 1e-10 else 0.0)
+        cot_alpha = (
+            np.cos(alpha) / np.sin(alpha) if np.abs(np.sin(alpha)) > 1e-10 else 0.0
+        )
         cbp = -np.cos(beta + phi)
         sbp = -np.sin(beta + phi)
-        V = 0.25 * dG_dt * r**2 * (
-            2 * r * cbp * np.sin(alpha) * (
-                (1 - np.cos(theta)) * np.sin(alpha) * sbp
-                + np.cos(alpha) * np.sin(theta)
-            )
-            + theta * (
-                cbp * np.sin(alpha) * (2*z0 - y0*cot_alpha)
-                + x0 * sbp
+        V = (
+            0.25
+            * dG_dt
+            * r**2
+            * (
+                2
+                * r
+                * cbp
+                * np.sin(alpha)
+                * (
+                    (1 - np.cos(theta)) * np.sin(alpha) * sbp
+                    + np.cos(alpha) * np.sin(theta)
+                )
+                + theta * (cbp * np.sin(alpha) * (2 * z0 - y0 * cot_alpha) + x0 * sbp)
             )
         )
         return V
 
     @staticmethod
-    def get_Vx(r, theta=0.0, phi=0.0, dG_dt=1.0, x0=0.0, y0=0.0, z0=0.0,
-               alpha=np.radians(-15), beta=0.0):
+    def get_Vx(
+        r,
+        theta=0.0,
+        phi=0.0,
+        dG_dt=1.0,
+        x0=0.0,
+        y0=0.0,
+        z0=0.0,
+        alpha=np.radians(-15),
+        beta=0.0,
+    ):
         """
         Full analytic artefact voltage for transverse x-gradient. Eq 7.
         MNE coordinate system.
         """
         cbp = -np.cos(beta + phi)
         sbp = -np.sin(beta + phi)
-        V = (1/6) * dG_dt * r**2 * (
-            2 * r * (
-                (1 - np.cos(theta)) * np.sin(alpha) * cbp**2
-                - sbp * np.cos(alpha) * np.sin(theta)
-            )
-            + 3 * theta * (
-                x0 * cbp * np.sin(alpha)
-                - z0 * sbp
+        V = (
+            (1 / 6)
+            * dG_dt
+            * r**2
+            * (
+                2
+                * r
+                * (
+                    (1 - np.cos(theta)) * np.sin(alpha) * cbp**2
+                    - sbp * np.cos(alpha) * np.sin(theta)
+                )
+                + 3 * theta * (x0 * cbp * np.sin(alpha) - z0 * sbp)
             )
         )
         return V
 
     @staticmethod
-    def get_Vy(r, theta=0.0, phi=0.0, dG_dt=1.0, x0=0.0, y0=0.0, z0=0.0,
-               alpha=np.radians(-15), beta=0.0):
+    def get_Vy(
+        r,
+        theta=0.0,
+        phi=0.0,
+        dG_dt=1.0,
+        x0=0.0,
+        y0=0.0,
+        z0=0.0,
+        alpha=np.radians(-15),
+        beta=0.0,
+    ):
         """
         Full analytic artefact voltage for transverse y-gradient.
         Vy = Vx with beta -> beta + pi/2. MNE coordinate system.
         """
         return GradientArtefact.get_Vx(
-            r, theta, phi, dG_dt, x0, y0, z0,
-            alpha=alpha, beta=beta + np.pi/2
+            r, theta, phi, dG_dt, x0, y0, z0, alpha=alpha, beta=beta + np.pi / 2
         )
 
     # ------------------------------------------------------------------ #
     #  Visualisation                                                       #
     # ------------------------------------------------------------------ #
 
-    def plot_field(self, axis='z', G=1.0, n_grid=8, show_sphere=True):
+    def plot_field(self, axis="z", G=1.0, n_grid=8, show_sphere=True):
         """Plot sphere and A field vectors in 3D — for visual inspection."""
         fig = plt.figure(figsize=(9, 9))
-        ax  = fig.add_subplot(111, projection='3d')
+        ax = fig.add_subplot(111, projection="3d")
         cx, cy, cz = self.sphere.center
         r = self.sphere.radius
 
         if show_sphere:
-            u = np.linspace(0, 2*np.pi, 40)
+            u = np.linspace(0, 2 * np.pi, 40)
             v = np.linspace(0, np.pi, 40)
             sx = cx + r * np.outer(np.cos(u), np.sin(v))
             sy = cy + r * np.outer(np.sin(u), np.sin(v))
             sz = cz + r * np.outer(np.ones_like(u), np.cos(v))
-            ax.plot_surface(sx, sy, sz, alpha=1.0, color='lightblue', zorder=1)
+            ax.plot_surface(sx, sy, sz, alpha=1.0, color="lightblue", zorder=1)
 
         for wire in self.sphere.wires:
-            ax.plot(wire[:,0], wire[:,1], wire[:,2],
-                    linewidth=0.8, alpha=0.6, color='steelblue', zorder=2)
+            ax.plot(
+                wire[:, 0],
+                wire[:, 1],
+                wire[:, 2],
+                linewidth=0.8,
+                alpha=0.6,
+                color="steelblue",
+                zorder=2,
+            )
 
         ep = self.sphere.eeg_coords_proj
-        ax.scatter(ep[:,0], ep[:,1], ep[:,2], s=15, color='red', zorder=3)
+        ax.scatter(ep[:, 0], ep[:, 1], ep[:, 2], s=15, color="red", zorder=3)
 
-        coords  = np.linspace(-r*1.5, r*1.5, n_grid)
-        X, Y, Z = np.meshgrid(coords, coords, coords, indexing='ij')
+        coords = np.linspace(-r * 1.5, r * 1.5, n_grid)
+        X, Y, Z = np.meshgrid(coords, coords, coords, indexing="ij")
         x_flat, y_flat, z_flat = X.flatten(), Y.flatten(), Z.flatten()
 
-        A_func   = {'x': self.A_x, 'y': self.A_y, 'z': self.A_z}[axis]
-        A_vals   = A_func(x_flat, y_flat, z_flat, G)
-        mag      = np.linalg.norm(A_vals, axis=1)
+        A_func = {"x": self.A_x, "y": self.A_y, "z": self.A_z}[axis]
+        A_vals = A_func(x_flat, y_flat, z_flat, G)
+        mag = np.linalg.norm(A_vals, axis=1)
         mag_norm = mag / (mag.max() + 1e-10)
-        colors   = plt.cm.viridis(mag_norm)
+        colors = plt.cm.viridis(mag_norm)
 
-        ax.quiver(x_flat, y_flat, z_flat,
-                  A_vals[:,0], A_vals[:,1], A_vals[:,2],
-                  length=r*0.12, normalize=True,
-                  color=colors, alpha=0.8, zorder=0)
+        ax.quiver(
+            x_flat,
+            y_flat,
+            z_flat,
+            A_vals[:, 0],
+            A_vals[:, 1],
+            A_vals[:, 2],
+            length=r * 0.12,
+            normalize=True,
+            color=colors,
+            alpha=0.8,
+            zorder=0,
+        )
 
-        ax.set_title(f'A_{axis} field')
-        ax.set_xlabel('x (m)'); ax.set_ylabel('y (m)'); ax.set_zlabel('z (m)')
-        ax.set_box_aspect([1,1,1])
+        ax.set_title(f"A_{axis} field")
+        ax.set_xlabel("x (m)")
+        ax.set_ylabel("y (m)")
+        ax.set_zlabel("z (m)")
+        ax.set_box_aspect([1, 1, 1])
         plt.show()
 
     # ------------------------------------------------------------------ #
     #  Simulation                                                          #
     # ------------------------------------------------------------------ #
 
-    def simulate(self, ref_channel_name='Cz', eeg_sfreq=5000,
-                 alpha=np.radians(15), beta=0.0):
+    def simulate(
+        self, ref_channel_name="Cz", eeg_sfreq=5000, alpha=np.radians(15), beta=0.0
+    ):
         """
         Simulate gradient artefact for all channels.
 
@@ -319,7 +390,7 @@ class GradientArtefact:
         """
         from scipy.signal import resample
 
-        r      = self.sphere.radius
+        r = self.sphere.radius
         center = self.sphere.center
 
         # bore offset = paper's z0 (their z = bore axis = MNE y)
@@ -327,35 +398,38 @@ class GradientArtefact:
         y0 = 0.0
         z0 = self.sphere.bore_offset
 
-        dt     = 1 / self.sfreq
+        dt = 1 / self.sfreq
         dGx_dt = np.diff(self.Gx, prepend=self.Gx[0]) / dt
         dGy_dt = np.diff(self.Gy, prepend=self.Gy[0]) / dt
         dGz_dt = np.diff(self.Gz, prepend=self.Gz[0]) / dt
 
-        ref_idx   = self.sphere.ch_names.index(ref_channel_name)
-        ref_ep    = self.sphere.eeg_coords_proj[ref_idx] - center
-        ref_phi   = np.arctan2(ref_ep[1], ref_ep[0])     # standard MNE
+        ref_idx = self.sphere.ch_names.index(ref_channel_name)
+        ref_ep = self.sphere.eeg_coords_proj[ref_idx] - center
+        ref_phi = np.arctan2(ref_ep[1], ref_ep[0])  # standard MNE
         ref_theta = np.arccos(np.clip(ref_ep[2] / r, -1, 1))
 
-        n_ch      = len(self.sphere.ch_names)
+        n_ch = len(self.sphere.ch_names)
         n_samples = len(dGx_dt)
 
-        V_one       = np.zeros((n_ch, n_samples))
+        V_one = np.zeros((n_ch, n_samples))
         self.Vx_all = np.zeros((n_ch, n_samples))
         self.Vy_all = np.zeros((n_ch, n_samples))
         self.Vz_all = np.zeros((n_ch, n_samples))
 
         for i, ep in enumerate(self.sphere.eeg_coords_proj):
             ep_rel = ep - center
-            phi    = np.arctan2(ep_rel[1], ep_rel[0])    # standard MNE
-            theta  = np.arccos(np.clip(ep_rel[2] / r, -1, 1))
+            phi = np.arctan2(ep_rel[1], ep_rel[0])  # standard MNE
+            theta = np.arccos(np.clip(ep_rel[2] / r, -1, 1))
 
-            self.Vx_all[i] = (self.get_Vx(r, theta, phi, dGx_dt, x0, y0, z0, alpha, beta) -
-                              self.get_Vx(r, ref_theta, ref_phi, dGx_dt, x0, y0, z0, alpha, beta))
-            self.Vy_all[i] = (self.get_Vy(r, theta, phi, dGy_dt, x0, y0, z0, alpha, beta) -
-                              self.get_Vy(r, ref_theta, ref_phi, dGy_dt, x0, y0, z0, alpha, beta))
-            self.Vz_all[i] = (self.get_Vz(r, theta, phi, dGz_dt, x0, y0, z0, alpha, beta) -
-                              self.get_Vz(r, ref_theta, ref_phi, dGz_dt, x0, y0, z0, alpha, beta))
+            self.Vx_all[i] = self.get_Vx(
+                r, theta, phi, dGx_dt, x0, y0, z0, alpha, beta
+            ) - self.get_Vx(r, ref_theta, ref_phi, dGx_dt, x0, y0, z0, alpha, beta)
+            self.Vy_all[i] = self.get_Vy(
+                r, theta, phi, dGy_dt, x0, y0, z0, alpha, beta
+            ) - self.get_Vy(r, ref_theta, ref_phi, dGy_dt, x0, y0, z0, alpha, beta)
+            self.Vz_all[i] = self.get_Vz(
+                r, theta, phi, dGz_dt, x0, y0, z0, alpha, beta
+            ) - self.get_Vz(r, ref_theta, ref_phi, dGz_dt, x0, y0, z0, alpha, beta)
 
             V_one[i] = (self.Vx_all[i] + self.Vy_all[i] + self.Vz_all[i]) * 1e6
 
@@ -365,11 +439,10 @@ class GradientArtefact:
 
         V_full = np.tile(V_one, self.n_slices * self.n_volumes)
         n_eeg_samples = int(V_full.shape[1] * eeg_sfreq / self.sfreq)
-        self.V_t      = resample(V_full, n_eeg_samples, axis=1)
+        self.V_t = resample(V_full, n_eeg_samples, axis=1)
         self.eeg_sfreq = eeg_sfreq
 
         return self
-
 
     '''
     def _compute_scaling(self, axis):
@@ -418,9 +491,9 @@ class GradientArtefact:
         return -r * np.trapz(integrand, thetas)
     '''
 
-    '''
+    """
     def simulate(self, eeg_sfreq=5000):
-        
+
         from scipy.signal import resample
 
         # 1. compute scaling factors once per axis
@@ -448,8 +521,9 @@ class GradientArtefact:
         self.eeg_sfreq = eeg_sfreq
 
         return self
-    '''
-    
+    """
+
+
 ### Simlate EEG
 """
     def simulate_eeg(self, alpha=True, blinks=True):

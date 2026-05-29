@@ -7,13 +7,13 @@ minor 5
 revision 0
 
 [DEFINITIONS]
-AdcRasterTime 1e-07 
-BlockDurationRaster 1e-05 
-FOV 0.22 0.22 0.003 
-GradientRasterTime 1e-05 
-Name epi 
-RadiofrequencyRasterTime 1e-06 
-TotalDuration 0.05135 
+AdcRasterTime 1e-07
+BlockDurationRaster 1e-05
+FOV 0.22 0.22 0.003
+GradientRasterTime 1e-05
+Name epi
+RadiofrequencyRasterTime 1e-06
+TotalDuration 0.05135
 
 # Format of blocks:
 # NUM DUR RF  GX  GY  GZ  ADC  EXT

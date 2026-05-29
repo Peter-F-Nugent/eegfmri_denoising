@@ -18,6 +18,7 @@ DATASET.load_registry(
     resources.files("eegfmri_denoising").joinpath("registry.txt").open()
 )
 
+
 def fetch_example_data():
     """
     Download and cache the example resting state EEG-fMRI dataset.
@@ -28,8 +29,10 @@ def fetch_example_data():
 
     return pooch.os_cache("eegfmri_denoising")
 
+
 if __name__ == "__main__":
     import mne
+
     print("Downloading example data...")
     bids_root = fetch_example_data()
     print(f"Data cached at: {bids_root}")
