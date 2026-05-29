@@ -33,6 +33,7 @@ def fetch_example_data():
 if __name__ == "__main__":
     import mne
 
+    # TODO DELETE ME
     print("Downloading example data...")
     bids_root = fetch_example_data()
     print(f"Data cached at: {bids_root}")
