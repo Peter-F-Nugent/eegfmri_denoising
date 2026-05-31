@@ -13,10 +13,13 @@
     <img alt="Python versions" src="https://img.shields.io/pypi/pyversions/eegfmri-denoising.svg">
   </a>
   <a href="https://dl.circleci.com/status-badge/redirect/gh/Bingram22/eegfmri_denoising/tree/main">
-    <img alt="CircleCI" src="https://dl.circleci.com/status-badge/img/gh/Bingram22/eegfmri_denoising/tree/main.svg?style=svg">
+    <img alt="CircleCI" src="https://dl.circleci.com/status-badge/img/gh/Bingram22/eegfmri_denoising/tree/main.svg?style=shield">
   </a>
   <a href="https://codecov.io/gh/Bingram22/eegfmri_denoising">
     <img alt="Coverage" src="https://codecov.io/gh/Bingram22/eegfmri_denoising/branch/main/graph/badge.svg">
+  </a>
+  <a href="https://opensource.org/licenses/Apache-2.0">
+    <img alt="License: Apache 2.0" src="https://img.shields.io/badge/License-Apache%202.0-blue.svg">
   </a>
 </p>
 
