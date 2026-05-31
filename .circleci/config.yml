@@ -1,5 +1,8 @@
 version: 2.1
 
+orbs:
+  codecov: codecov/codecov@5
+
 jobs:
   test:
     docker:
@@ -13,8 +16,9 @@ jobs:
           name: Install dependencies
           command: uv sync
       - run:
-          name: Run tests
-          command: uv run pytest
+          name: Run tests with coverage
+          command: uv run pytest --cov=eegfmri_denoising --cov-report=xml
+      - codecov/upload
 
   publish:
     docker:
